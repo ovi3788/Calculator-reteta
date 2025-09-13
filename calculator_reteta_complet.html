@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+  <meta charset="UTF-8">
+  <title>Calculator Rețetă</title>
+  <style>
+    body { font-family: 'Segoe UI', sans-serif; background-color: #f4f6f8; margin: 0; padding: 0; color: #333; }
+    
+    /* Header cu fundal imagine */
+    header { position: relative; color: white; text-align: center; height: 200px; overflow: hidden; }
+    #headerBackground { 
+      position: absolute; top:0; left:0; width:100%; height:100%; 
+      background-image: url('header.jpg'); 
+      background-size: cover; background-position: center; 
+      z-index:1; 
+      animation: zoom 20s infinite alternate; 
+    }
+    @keyframes zoom { from { transform: scale(1); } to { transform: scale(1.1); } }
+    header h1, header p { position: relative; z-index:2; margin: 0; padding-top: 40px; }
+
+    nav { background-color: #336699; overflow: hidden; }
+    nav a { float: left; display: block; color: white; text-align: center; padding: 14px 20px; text-decoration: none; }
+    nav a:hover { background-color: #C0C0C0; }
+
+    .section { display: none; padding: 20px; }
+    .active { display: block; }
+    table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+    th, td { padding: 10px; border: 1px solid #ccc; text-align: left; }
+    input, select { width: 100%; padding: 6px; box-sizing: border-box; }
+    button { padding: 10px 16px; background-color: #2980b9; color: white; border: none; border-radius: 6px; font-size: 15px; cursor: pointer; margin-right: 10px; margin-top: 10px; }
+    button:hover { background-color: #2471a3; }
+    .result { background-color: #ecf0f1; padding: 20px; border-radius: 8px; }
+
+    #materiePrimaTable tbody, #retetarTable tbody, #tabelProduse tbody { max-height: 300px; overflow-y: auto; display: block; }
+    #materiePrimaTable thead, #retetarTable thead, #tabelProduse thead { display: table; width: 100%; table-layout: fixed; }
+    #materiePrimaTable tbody tr, #retetarTable tbody tr, #tabelProduse tr { display: table; width: 100%; table-layout: fixed; }
+
+    #searchIngredient { margin-bottom: 10px; padding: 6px; width: 100%; }
+    .pretCrestere { color: green; font-weight:bold; }
+    .pretScadere { color: red; font-weight:bold; }
+  </style>
+</head>
+<body>
+  <header>
+    <div id="headerBackground"></div>
+    <h1>Calculator Rețetă</h1>
+    <p>Ciubotelele dulci</p>
+  </header>
+
+  <nav>
+    <a href="#" onclick="showSection('materiePrima')">Materie Primă</a>
+    <a href="#" onclick="showSection('retetar')">Rețetar</a>
+    <a href="#" onclick="showSection('rezultate')">Rezultate</a>
+    <a href="#" onclick="showSection('monitorPret')">Monitor Preț</a>
+  </nav>
+
+  <!-- Materie Primă -->
+  <div id="materiePrima" class="section">
+    <h2>Materie Primă</h2>
+    <input type="text" id="searchIngredient" placeholder="Caută ingredient..." onkeyup="cautaIngredient()">
+    <table id="materiePrimaTable">
+      <thead><tr><th>Ingredient</th><th>Preț achiziție (RON)</th><th>Gramaj achiziționat (g)</th></tr></thead>
+      <tbody></tbody>
+    </table>
+    <button onclick="adaugaMateriePrima()">Adaugă materie primă</button>
+    <button onclick="exportaMateriePrima()">Exportă materie primă</button>
+    <input type="file" id="importFileMP" onchange="importaMateriePrima(event)" style="display:none;">
+    <button onclick="document.getElementById('importFileMP').click()">Importă materie primă</button>
+  </div>
+
+  <!-- Rețetar -->
+  <div id="retetar" class="section">
+    <form id="retetaForm" onsubmit="return false;">
+      <h2>Rețetar Produs Finit</h2>
+      <label>Nume produs finit:</label>
+      <input type="text" id="numeProdus" placeholder="Ex: Ecler">
+      <label>Categorie produs:</label>
+      <input type="text" id="categorieProdus" placeholder="Ex: Tort, Prajitura">
+      <table id="retetarTable">
+        <thead><tr><th>Ingredient</th><th>Gramaj folosit (g)</th></tr></thead>
+        <tbody><tr><td><input type="text" placeholder="Ex: Zahăr"></td><td><input type="number" step="0.1" class="gramajRetetar"></td></tr></tbody>
+      </table>
+      <button onclick="adaugaRandRetetar()">Adaugă ingredient în rețetă</button>
+      <label>Gramaj rezultat final (g):</label><input type="number" id="gramajFinal">
+      <label>Marja de profit (%):</label><input type="number" id="marjaProfit" value="30">
+      <label>Durata manoperă (ore):</label><input type="number" id="durataManopera">
+      <label>Salariu minim brut lunar (RON):</label><input type="number" id="salariuMinim" value="3700">
+      <button onclick="calculeazaReteta()">Calculează</button>
+      <button onclick="salveazaProdus()">Salvează produs</button>
+      <p id="profitEstimativ" style="font-weight: bold; margin-top: 10px;"></p>
+      <div class="result" id="rezultat"></div>
+    </form>
+  </div>
+
+  <!-- Rezultate -->
+  <div id="rezultate" class="section">
+    <h2 style="text-align:center;">Produse Finite Salvate</h2>
+    <table id="tabelProduse">
+      <thead><tr><th>Nume produs</th><th>Categorie</th><th>Preț pe kg (RON)</th><th>Profit estimativ (RON)</th><th>Acțiuni</th></tr></thead>
+      <tbody></tbody>
+    </table>
+    <div style="text-align:center;">
+      <button onclick="exportaProduse()">Exportă produse finite</button>
+      <input type="file" id="importFileProd" onchange="importaProduse(event)" style="display:none;">
+      <button onclick="document.getElementById('importFileProd').click()">Importă produse finite</button>
+      <button onclick="stergeToateProdusele()">Șterge toate produsele</button>
+    </div>
+  </div>
+
+  <!-- Monitor Preț -->
+  <div id="monitorPret" class="section">
+    <h2 style="text-align:center;">Monitorizare creștere preț materie primă</h2>
+    <table id="monitorPretTable">
+      <thead><tr><th>Ingredient</th><th>% Creștere</th></tr></thead>
+      <tbody></tbody>
+    </table>
+    <button onclick="afiseazaMonitorPret()">Actualizează monitor</button>
+  </div>
+
+<script>
+let materiePrimaAnterioara = JSON.parse(localStorage.getItem("materiePrima")) || [];
+
+function showSection(id){document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));document.getElementById(id).classList.add('active');}
+window.onload=function(){showSection('materiePrima');incarcaMateriePrima();afiseazaProduse();};
+
+// --- Materie primă ---
+function adaugaMateriePrima(){const tbody=document.querySelector("#materiePrimaTable tbody");const row=tbody.insertRow();row.innerHTML=`<td><input type="text" placeholder="Ex: Ouă"></td><td><input type="number" step="0.01" class="pretMaterie"></td><td><input type="number" step="0.1" class="gramajMaterie"></td>`;salveazaMateriePrima();}
+function salveazaMateriePrima(){const rows=document.querySelectorAll("#materiePrimaTable tbody tr");const data=[];rows.forEach(r=>{const ingredient=r.cells[0].querySelector("input").value.trim();const pret=parseFloat(r.cells[1].querySelector("input").value)||0;const gramaj=parseFloat(r.cells[2].querySelector("input").value)||0;if(ingredient)data.push({ingredient,pret,gramaj});});localStorage.setItem("materiePrima",JSON.stringify(data));}
+function incarcaMateriePrima(){const data=JSON.parse(localStorage.getItem("materiePrima"))||[];const tbody=document.querySelector("#materiePrimaTable tbody");tbody.innerHTML="";data.forEach(item=>{const row=tbody.insertRow();row.innerHTML=`<td><input type="text" value="${item.ingredient}"></td><td><input type="number" step="0.01" class="pretMaterie" value="${item.pret}"></td><td><input type="number" step="0.1" class="gramajMaterie" value="${item.gramaj}"></td>`;});}
+
+// Caută ingredient
+function cautaIngredient(){const filter=document.getElementById("searchIngredient").value.toLowerCase();document.querySelectorAll("#materiePrimaTable tbody tr").forEach(r=>{const text=r.cells[0].querySelector("input").value.toLowerCase();r.style.display=text.includes(filter)?"":"none";});}
+
+// Monitorizare pret
+function afiseazaMonitorPret(){const data=JSON.parse(localStorage.getItem("materiePrima"))||[];const tbody=document.querySelector("#monitorPretTable tbody");tbody.innerHTML="";data.forEach(item=>{let anterior=materiePrimaAnterioara.find(x=>x.ingredient===item.ingredient);let proc=0;if(anterior)proc=((item.pret-anterior.pret)/anterior.pret*100).toFixed(2);const tr=tbody.insertRow();tr.innerHTML=`<td>${item.ingredient}</td><td class="${proc>=0?'pretCrestere':'pretScadere'}">${proc}%</td>`;});materiePrimaAnterioara=data.map(x=>({...x}));}
+
+// --- Rețetar ---
+function adaugaRandRetetar(){const tbody=document.querySelector("#retetarTable tbody");const row=tbody.insertRow();row.innerHTML=`<td><input type="text" placeholder="Ex: Zahăr"></td><td><input type="number" step="0.1" class="gramajRetetar"></td>`;}
+function calculeazaReteta(){const ingrediente=document.querySelectorAll("#retetarTable tbody tr");const materieRows=JSON.parse(localStorage.getItem("materiePrima"))||[];let totalCost=0;ingrediente.forEach(row=>{const nume=row.cells[0].querySelector("input").value.trim().toLowerCase();const gramaj=parseFloat(row.cells[1].querySelector("input").value)||0;materieRows.forEach(mRow=>{if(nume===mRow.ingredient.toLowerCase()&&mRow.gramaj>0){totalCost+=mRow.pret*(gramaj/mRow.gramaj);}});});const salariuMinim=parseFloat(document.getElementById("salariuMinim").value)||0;const ore=parseFloat(document.getElementById("durataManopera").value)||0;const costManopera=(salariuMinim/168)*ore;totalCost+=costManopera;const marja=parseFloat(document.getElementById("marjaProfit").value)||0;const gramajFinal=parseFloat(document.getElementById("gramajFinal").value)||1;const pretFinal=totalCost*(1+marja/100);const pretPeKg=(pretFinal/gramajFinal)*1000;document.getElementById("rezultat").innerHTML=`Investiție totală: ${totalCost.toFixed(2)} RON<br>Preț final cu marjă: ${pretFinal.toFixed(2)} RON<br>Preț pe kg vândut: ${pretPeKg.toFixed(2)} RON/kg`;let profit=pretFinal-totalCost;document.getElementById("profitEstimativ").innerText="Profit estimativ: "+profit.toFixed(2)+" RON";return pretPeKg.toFixed(2);}
+function salveazaProdus(){const nume=document.getElementById("numeProdus").value.trim();if(!nume){alert("Introdu numele produsului finit.");return;}const categorie=document.getElementById("categorieProdus").value.trim();const pretPeKg=calculeazaReteta();let produse=JSON.parse(localStorage.getItem("produse"))||[];const index=produse.findIndex(p=>p.nume.toLowerCase()===nume.toLowerCase());if(index>=0){produse[index].pretPeKg=pretPeKg;produse[index].categorie=categorie;}else{produse.push({nume,categorie,pretPeKg});}localStorage.setItem("produse",JSON.stringify(produse));afiseazaProduse();document.getElementById("numeProdus").value="";document.getElementById("categorieProdus").value="";document.getElementById("gramajFinal").value="";document.getElementById("marjaProfit").value=30;document.getElementById("durataManopera").value="";document.querySelector("#retetarTable tbody").innerHTML=`<tr><td><input type="text" placeholder="Ex: Zahăr"></td><td><input type="number" step="0.1" class="gramajRetetar"></td></tr>`;document.getElementById("rezultat").innerHTML="";}
+
+// --- Rezultate ---
+function afiseazaProduse(){const produse=JSON.parse(localStorage.getItem("produse"))||[];const tbody=document.querySelector("#tabelProduse tbody");tbody.innerHTML="";produse.forEach((p,i)=>{const row=tbody.insertRow();row.innerHTML=`<td>${p.nume}</td><td>${p.categorie||''}</td><td>${p.pretPeKg}</td><td>-</td><td><button onclick="stergeProdus(${i})">Șterge</button></td>`;});}
+function stergeProdus(index){let produse=JSON.parse(localStorage.getItem("produse"))||[];produse.splice(index,1);localStorage.setItem("produse",JSON.stringify(produse));afiseazaProduse();}
+function stergeToateProdusele(){if(confirm("Sigur vrei să ștergi toate produsele?")){localStorage.removeItem("produse");afiseazaProduse();}}
+function exportaProduse(){const produse=JSON.parse(localStorage.getItem("produse"))||[];let csv="Nume produs,Categorie,Preț pe kg (RON)\n";produse.forEach(item=>{csv+=`"${item.nume}","${item.categorie}",${item.pretPeKg}\n`;});const blob=new Blob([csv],{type:"text/csv;charset=utf-8;"});const link=document.createElement("a");link.href=URL.createObjectURL(blob);link.download="produse_finite.csv";link.click();}
+function importaProduse(event){const file=event.target.files[0];if(!file)return;const reader=new FileReader();reader.onload=function(e){const lines=e.target.result.split("\n").slice(1);const data=[];lines.forEach(line=>{const [nume,categorie,pret]=line.split(",");if(nume)data.push({nume:nume.replace(/"/g,''),categorie:categorie.replace(/"/g,''),pretPeKg:parseFloat(pret)});});localStorage.setItem("produse",JSON.stringify(data));afiseazaProduse();};reader.readAsText(file);}
+</script>
+</body>
+</html>
